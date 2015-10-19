@@ -148,10 +148,14 @@ public:
     friend Function cos(Function& f);
     friend Function sin(Function& f);
     friend Function sqrt(Function& f);
+    friend Function expo(Function& f);
+    friend Function log(Function& f);
 
     friend Function cos(Function&& f);
     friend Function sin(Function&& f);
     friend Function sqrt(Function&& f);
+    friend Function expo(Function&& f);
+    friend Function log(Function&& f);
 
     Function& operator=(const Function& f);
     

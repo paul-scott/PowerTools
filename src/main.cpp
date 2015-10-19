@@ -11,11 +11,7 @@
 #include <stdio.h>
 #include <cstring>
 #include <fstream>
-#include "PowerTools++/Net.h"
-#include "PowerTools++/IpoptProgram.h"
 #include "PowerTools++/Solver.h"
-#include "PowerTools++/Complex.h"
-#include "PowerTools++/PowerModel.h"
 
 using namespace std;
 
@@ -67,84 +63,70 @@ double get_cpu_time(){
 
 int main (int argc, const char * argv[])
 {
-//    if (argc != 4) {
-//        cerr << "Wrong number of arguments.\n";
-//        exit(1);
-//    }
-//    PowerModelType pmt = ACPOL;
-//    PowerModelType pmt = SOCP;
     //  Start Timers
     double wall0 = get_wall_time();
-    double cpu0  = get_cpu_time();
-    PowerModelType pmt = SDP;
-//    PowerModelType pmt = QC;
-//    PowerModelType pmt = QC_SDP;
-//    PowerModelType pmt = SOCP_OTS;
-//    PowerModelType pmt = ACRECT;
+//    double cpu0  = get_cpu_time();
     SolverType st = ipopt;
-//    SolverType st = gurobi;
-//        string filename = "../../data/nesta_case5_pjm__sad.m";
-//    string filename = "../../data/nesta_case3_lmbd.m";
-    string filename = "../../data/nesta_case118_ieee.m";
-//    string filename = "../../data/nesta_case29_edin__sad.m";
-//    string filename = "../../data/nesta_case24_ieee_rts.m";
-//    string filename = "../../data/nesta_case24_ieee_rts__api.m";
-//    string filename = "../../data/nesta_case30_ieee.m";
-//    string filename = "../../data/nesta_case57_ieee.m";
-//    string filename = "../../data/nesta_case30_as__sad.m";
-//    string filename = "../../data/nesta_case24_ieee_rts__sad.m";
-//    string filename = "../../data/nesta_case2224_edin.m";
-//    string filename = "../../data/nesta_case14_ieee.m";
-//    string filename = "../../data/nesta_case162_ieee_dtc.m";
-//    string filename = "../../data/nesta_case5_pjm.m";
-    if (argc >=2) {
-        filename = argv[1];
+    Model model;
+    Solver solver(&model, st);
+
+    meta_var x("x", &model);
+    meta_var y("y", &model);
+    meta_constant a("a", &model);
+    meta_constant b("b", &model);
+    meta_Constraint cons;
     
-        if(!strcmp(argv[2],"ACPOL")) pmt = ACPOL;
-        else if(!strcmp(argv[2],"ACRECT")) pmt = ACRECT;
-        else if(!strcmp(argv[2],"QC")) pmt = QC;
-        else if(!strcmp(argv[2],"QC_SDP")) pmt = QC_SDP;
-        else if(!strcmp(argv[2],"OTS")) pmt = OTS;
-        else if(!strcmp(argv[2],"SOCP")) pmt = SOCP;
-        else if(!strcmp(argv[2],"SDP")) pmt = SDP;
-        else if(!strcmp(argv[2],"DC")) pmt = DC;
-        //else if(!strcmp(argv[2],"QC_OTS")) pmt = QC_OTS;
-        else if(!strcmp(argv[2],"SOCP_OTS")) pmt = SOCP_OTS;
-            else{
-                    cerr << "Unknown model type.\n";
-                    exit(1);
-            }
-        
-        if(!strcmp(argv[3],"ipopt")) st = ipopt;
-        
-        else if(!strcmp(argv[3],"gurobi")) st = gurobi;
-        else{
-            cerr << "Unknown solver type.\n";
-            exit(1);
-        }
-
-    }
-
-    cout << "############################## POWERTOOLS ##############################\n\n";
-    Net net;
-    if(net.readFile(filename)==-1)
-        return -1;
-//    net.readFile("data/nesta/nesta_case2383wp_mp.m");
-//    net.readFile("data/nesta/nesta_case300_ieee.m");
-//    net.readFile("../../data/nesta/nesta_case9241_pegase.m");
-//    net.readFile("../../data/nesta/nesta_case2383wp_mp.m");
-//    net.readFile("../data/nesta/" + filename);
-//    PowerModel power_model(pmt,&net);
-    cout << "\nTo run PowerTools with a different input/power flow model, enter:\nPowerTools filename ACPOL/ACRECT/SOCP/QC/QC_SDP/SDPDC/OTS/SOCP_OTS ipopt/gurobi\n\n";
-    PowerModel power_model(pmt,&net,st);
-//    power_model.propagate_bounds();
-    power_model.build();
-    power_model.min_cost();
-    int status = power_model.solve();
+//    cons = a*x*y - ((2*y)^2)*b + cos(x);
+    cons = log(x*y) + x*expo(y);
+    cons >= 0;
+    cons.print();
+    model.addMetaConstraint(cons);
+    model.init_functions(1);
+//    model.print_functions();
+    
+    /* First derivatives */
+    cons.compute_dfdx(&x);
+    cout << "dfdx : ";
+    cons._dfdx[x.get_idx()]->print(true);
+    cons.compute_dfdx(&y);
+    cout << "dfdy : ";
+    cons._dfdx[y.get_idx()]->print(true);
+    
+    /* Second derivatives */
+    cons._dfdx[x.get_idx()]->compute_dfdx(&y);
+    cout << "dfdxdy : ";
+    cons._dfdx[x.get_idx()]->_dfdx[y.get_idx()]->print(true);
+    cons._dfdx[y.get_idx()]->compute_dfdx(&y);
+    cout << "dfdydx : ";
+    cons._dfdx[y.get_idx()]->_dfdx[x.get_idx()]->print(true);
+    
+    
+    
+    
+    /* Optimisation model based on my function */
+//    var<> x1 ("x", -1, 1);
+//    model.addVar(x1);
+//    var<> y1 ("y", 0, 1);
+//    model.addVar(y1);
+//    x = x1;
+//    y = y1;
+//    a = 2;
+//    b = 4.2;
+//    model.concretise(cons, 0, "cons1");
+//    
+//    Function* obj = new Function();
+//    *obj += x1;
+//    model.setObjective(obj);
+//    model.setObjectiveType(minimize);
+//    
+//    solver.run(0, false);
+    
+    
     //  Stop timers
     double wall1 = get_wall_time();
-    double cpu1  = get_cpu_time();
-    cout << "ALL_DATA, " << net._name << ", " << net.nodes.size() << ", " << net.arcs.size() << ", " << power_model._model->_opt<< ", " << status << ", " << wall1 - wall0<< ", -inf\n";
+//    double cpu1  = get_cpu_time();
+    cout << "Computation total time = " << wall1 - wall0 << endl;
+    
     return 0;
 
 }

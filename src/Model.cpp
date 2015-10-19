@@ -24,15 +24,15 @@ Model::Model(){
 
 /* Destructor */
 Model::~Model(){
-    for (auto it:_cons) {
-        delete it;
-    }
-    for (auto it:_meta_cons) {
-        delete it.second;
-    }
-    for (auto it:_meta_vars) {
-        delete it.second;
-    }
+//    for (auto it:_cons) {
+//        delete it;
+//    }
+//    for (auto it:_meta_cons) {
+//        delete it.second;
+//    }
+//    for (auto it:_meta_vars) {
+//        delete it.second;
+//    }
     delete _obj;
 };
 
@@ -1650,10 +1650,10 @@ void Model::fill_in_cstr_bounds(double* g_l ,double* g_u) {
 void Model::print_functions() const{
     cout << "Number of atomic functions = " << _functions.size();
     cout << endl;
-//    for (auto& f: _functions){
-//        f->print(false);
-//        cout << endl;
-//    }
+    for (auto& f: _functions){
+        f->print(false);
+        cout << endl;
+    }
     cout << endl;
 }
 

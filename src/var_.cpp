@@ -165,6 +165,18 @@ Function sin(var_& v){
     return sin(Function(v));
 };
 
+Function cos(var_& v){
+    return cos(Function(v));
+};
+
+Function expo(var_& v){
+    return expo(Function(v));
+};
+
+Function log(var_& v){
+    return log(Function(v));
+};
+
 
 //Function var_::operator^(int p){
 //    Function res(*this);
@@ -182,6 +194,7 @@ Quadratic var_::operator^(int p){
     Quadratic res_(*this);
     return res*=res_;
 }
+
 
 /* Output */
 void var_::print() const {

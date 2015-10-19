@@ -750,10 +750,26 @@ Function cos(const Quadratic& q){
     return cos(Function(q));
 };
 
+Function expo(const Quadratic& q){
+    return expo(Function(q));
+};
+
+Function log(const Quadratic& q){
+    return log(Function(q));
+};
+
 
 Function sin(const Quadratic& q){
     return sin(Function(q));
 };
+
+Function operator^(Quadratic& q, int p){
+    return Function(q)^p;
+}
+
+Function operator^(Quadratic&& q, int p){
+    return Function(q)^p;
+}
 
 
 Quadratic Quadratic::concretise(){

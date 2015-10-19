@@ -17,6 +17,10 @@ using namespace std;
 Function::Function():_idx(-1), _name("noname"), _ftype(constant_), _lparent(nullptr), _otype(id_), _rparent(nullptr), _coeff(1){
 };
 
+Function::Function(string name):Function(){
+    _name = name;
+};
+
 Function::Function(var_& v):Function(){
     _ftype = lin_;
     _quad += v;
@@ -81,7 +85,7 @@ bool additive(OperatorType op) {
 }
 
 bool unary(OperatorType op) {
-    return (op==sin_ || op==cos_ || op==power_);
+    return (op==sin_ || op==cos_ || op==power_ || op==exp_ || op==log_);
 }
 
 
@@ -377,6 +381,12 @@ double Function::eval(const double* x) const{
                 case sin_:
                     res = sin(res);
                     break;
+                case log_:
+                    res = log(res);
+                    break;
+                case exp_:
+                    res = exp(res);
+                    break;
                 default:
                     std::cerr << "unsupported operation";
                     exit(-1);
@@ -440,6 +450,12 @@ double Function::eval_meta(const double *x, map<int, double>& meta_coeff, map<in
                 case sin_:
                     res = sin(res);
                     break;
+                case log_:
+                    res = log(res);
+                    break;
+                case exp_:
+                    res = exp(res);
+                    break;
                 default:
                     std::cerr << "unsupported operation";
                     exit(-1);
@@ -500,6 +516,13 @@ double Function::eval_dfdx(int vid, const double* x) const {
                 case sin_:
                     return _coeff*(_lparent->eval_dfdx(vid, x)*cos(_lparent->eval(x))) + q_res;
                     break;
+                case exp_:
+                    return _coeff*(_lparent->eval_dfdx(vid, x)*exp2(_lparent->eval(x))) + q_res;
+                    break;
+                case log_:
+                    return _coeff*(_lparent->eval_dfdx(vid, x)/_lparent->eval(x)) + q_res;
+                    break;
+                    
                 default:
                     std::cerr << "unsupported unary operation";
                     exit(-1);
@@ -639,6 +662,15 @@ void Function::compute_dfdx(var_* v){
                     *df += _coeff * (*_lparent->_dfdx[vid]) * cos(*_lparent);
                     _dfdx[vid] = (df);
                     break;
+                case exp_:
+                    *df += _coeff * (*_lparent->_dfdx[vid]) * expo(*_lparent);
+                    _dfdx[vid] = (df);
+                    break;
+                case log_:
+                    *df += _coeff * (*_lparent->_dfdx[vid])/(*_lparent);
+                    _dfdx[vid] = (df);
+                    break;
+                    
                 default:
                     std::cerr << "unsupported unary operation";
                     exit(-1);
@@ -1084,15 +1116,39 @@ Function sin(Function& f){
 }
 
 Function sqrt(Function& f){
-    f._lparent = shared_ptr<Function>(new Function(f));
-    f._rparent = nullptr;
-    f._otype = sqrt_;
-    f._quad.reset_coeffs();
-    f._coeff = 1;
-    f.full_hess();
-    f.update_type();
-    return f;
+    Function res;
+    res.merge_vars(f);
+    res._lparent = make_shared<Function>(f);
+    res._rparent = nullptr;
+    res._otype = sqrt_;
+    res.full_hess();
+    res.update_type();
+    return res;
 }
+
+Function expo(Function& f){
+    Function res;
+    res.merge_vars(f);
+    res._lparent = make_shared<Function>(f);
+    res._rparent = nullptr;
+    res._otype = exp_;
+    res.full_hess();
+    res.update_type();
+    return res;
+}
+
+
+Function log(Function& f){
+    Function res;
+    res.merge_vars(f);
+    res._lparent = make_shared<Function>(f);
+    res._rparent = nullptr;
+    res._otype = log_;
+    res.full_hess();
+    res.update_type();
+    return res;
+}
+
 
 
 Function cos(Function&& f){
@@ -1131,6 +1187,28 @@ Function sqrt(Function&& f){
     res._lparent = make_shared<Function>(f);
     res._rparent = nullptr;
     res._otype = sqrt_;
+    res.full_hess();
+    res.update_type();
+    return res;
+}
+
+Function expo(Function&& f){
+    Function res;
+    res.merge_vars(f);
+    res._lparent = make_shared<Function>(f);
+    res._rparent = nullptr;
+    res._otype = exp_;
+    res.full_hess();
+    res.update_type();
+    return res;
+}
+
+Function log(Function&& f){
+    Function res;
+    res.merge_vars(f);
+    res._lparent = make_shared<Function>(f);
+    res._rparent = nullptr;
+    res._otype = log_;
     res.full_hess();
     res.update_type();
     return res;
@@ -1290,6 +1368,12 @@ Function Function::concretise(){
             case sin_:
                 res = sin(res);
                 break;
+            case exp_:
+                res = expo(res);
+                break;
+            case log_:
+                res = log(res);
+                break;
             default:
                 std::cerr << "unsupported operation";
                 exit(-1);
@@ -1355,12 +1439,18 @@ void Function::print_expr(bool brackets) const {
     if(_otype==sin_) {
         cout << "sin";
     }
+    if (_otype==exp_) {
+        cout << "exp";
+    }
+    if (_otype==log_) {
+        cout << "log";
+    }
     if(brackets && _rparent)
         cout << "(";
     if (_otype!=product_ || !_lparent->is_constant() || _lparent->get_const()!=1) {
         
         if (_lparent->is_leaf()) {
-            if(_otype!=plus_ && _otype!=minus_&& _lparent->get_nb_vars()>1) {
+            if((_otype!=plus_ && _otype!=minus_&& _lparent->get_nb_vars()>1) || _otype==sin_ || _otype==cos_|| _otype==exp_ || _otype==log_){
                 cout << "(";
                 _lparent->_quad.print();
                 cout << ")";
@@ -1393,13 +1483,13 @@ void Function::print_expr(bool brackets) const {
     
     if (_otype==power_) {
         cout << "^";
-//        if (_rparent->get_const()==1) {
-//            cerr << "To the power of one!\n";
-//            exit(-1);
-//        }
+        //        if (_rparent->get_const()==1) {
+        //            cerr << "To the power of one!\n";
+        //            exit(-1);
+        //        }
     }
-    
-    if (_rparent) {
+
+        if (_rparent) {
         if (_otype==plus_ || _rparent->get_nb_vars()<=1) {
             _rparent->print(false);
         }
@@ -1424,6 +1514,10 @@ void Function::print(bool domain) const {
     if (domain) {
         print_domain();
     }
+    if (is_constant()) {
+        cout << _quad._cst << endl;
+        return;
+    }
     if (is_nonlinear()) {
         print_expr(false);
     }
@@ -1435,7 +1529,7 @@ void Function::print(bool domain) const {
     if (domain) {
         switch (_ftype) {
             case constant_:
-                cout << "\nf is constant_.\n";
+                cout << "\nf is constant.\n";
                 break;
             case lin_:
                 cout << "\nf is linear.\n";

@@ -104,9 +104,15 @@ public:
     friend Function operator*(Quadratic q1, const Quadratic& q2);
     friend Function operator/(Quadratic q1, const Quadratic& q2);
 
+    friend Function operator^(Quadratic& q, int p);
+    friend Function operator^(Quadratic&& q, int p);
+//    Function operator^(int p);    
+    
     friend Function cos(const Quadratic& q);
     friend Function sin(const Quadratic& q);
     friend Function sqrt(const Quadratic& q);
+    friend Function expo(const Quadratic& q);
+    friend Function log(const Quadratic& q);
     
     Quadratic concretise();
     
