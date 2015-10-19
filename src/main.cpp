@@ -77,12 +77,9 @@ int main (int argc, const char * argv[])
     meta_Constraint cons;
     
 //    cons = a*x*y - ((2*y)^2)*b + cos(x);
-    cons = log(x*y) + x*expo(y);
+    cons = log(x*y) + x*expo((y^2) + x);
     cons >= 0;
     cons.print();
-    model.addMetaConstraint(cons);
-    model.init_functions(1);
-//    model.print_functions();
     
     /* First derivatives */
     cons.compute_dfdx(&x);
@@ -96,7 +93,7 @@ int main (int argc, const char * argv[])
     cons._dfdx[x.get_idx()]->compute_dfdx(&y);
     cout << "dfdxdy : ";
     cons._dfdx[x.get_idx()]->_dfdx[y.get_idx()]->print(true);
-    cons._dfdx[y.get_idx()]->compute_dfdx(&y);
+    cons._dfdx[y.get_idx()]->compute_dfdx(&x);
     cout << "dfdydx : ";
     cons._dfdx[y.get_idx()]->_dfdx[x.get_idx()]->print(true);
     
@@ -104,6 +101,10 @@ int main (int argc, const char * argv[])
     
     
     /* Optimisation model based on my function */
+//    model.addMetaConstraint(cons);
+//    model.init_functions(1);
+//        model.print_functions();
+
 //    var<> x1 ("x", -1, 1);
 //    model.addVar(x1);
 //    var<> y1 ("y", 0, 1);
